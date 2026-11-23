@@ -1,0 +1,58 @@
+name: Jana TikTok MP4
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Tajuk video
+        required: true
+        default: Takut Mati?
+        type: string
+      category:
+        description: Kategori
+        required: true
+        type: choice
+        options: [dakwah, homestay, produk, alam]
+      language:
+        description: Bahasa narasi
+        required: true
+        type: choice
+        options: [ms, ja]
+      duration:
+        description: Sasaran durasi
+        required: true
+        type: choice
+        options: ['15', '30', '60']
+      details:
+        description: Maklumat utama (pilihan)
+        required: false
+        type: string
+permissions:
+  contents: read
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install video tools
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg fonts-dejavu-core
+      - name: Generate MP4
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VIDEO_TOPIC: ${{ inputs.topic }}
+          VIDEO_CATEGORY: ${{ inputs.category }}
+          VIDEO_LANGUAGE: ${{ inputs.language }}
+          VIDEO_DURATION: ${{ inputs.duration }}
+          VIDEO_DETAILS: ${{ inputs.details }}
+        run: python3 scripts/generate_video.py
+      - name: Downloadable video
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-video
+          path: |
+            output/tiktok-video.mp4
+            output/skrip.txt
+            output/subtitle.srt
+            output/voice.mp3
+          if-no-files-found: error
+          retention-days: 7
